@@ -123,65 +123,54 @@ export default class OTPInputView extends Component {
   };
 
   handleChangeText = (index, text) => {
-    // let newdigits = digits.slice();
-    // const oldTextLength = newdigits[index] ? newdigits[index].length : 0;
-    // const newTextLength = text.length;
-    // if (newTextLength - oldTextLength === pinCount) {
-    //   // user pasted text in.
-    //   newdigits = text.split("").slice(oldTextLength, newTextLength);
-    //   this.setState({ digits: newdigits }, this.notifyCodeChanged);
-    // } else {
-    //   if (text.length === 0) {
-    //     if (newdigits.length > 0) {
-    //       newdigits = newdigits.slice(0, newdigits.length - 1);
-    //     }
-    //   } else {
-    //     text.split("").forEach(value => {
-    //       newdigits[index] = value;
-    //       index += 1;
-    //     });
-    //     index -= 1;
-    //   }
-    //   this.setState({ digits: newdigits }, this.notifyCodeChanged);
-    // }
-    // let result = newdigits.join("");
-    // if (result.length >= pinCount) {
-    //   onCodeFilled && onCodeFilled(result);
-    //   this.focusField(pinCount - 1);
-    //   this.blurAllFields();
-    // } else {
-    //   if (text.length > 0 && index < pinCount - 1) {
-    //     this.focusField(index + 1);
-    //   }
-    // }
     const { onCodeFilled, pinCount } = this.props;
     const digits = this.getDigits();
-
-    const digit = text[text.length - 1];
-
     const newDigits = [...digits];
-    newDigits[index] = digit || "";
 
-    this.setState({ digits: newDigits }, () => {
-      this.notifyCodeChanged();
-      // Clear digit
-      if (!text && index > 0) {
-        this.focusField(index - 1);
-      }
-      // Fill in digit
-      if (index < pinCount - 1 && !!text) {
-        this.focusField(index + 1);
-      }
+    // Handle not 1 digit
+    if (text.length > 1) {
+      let mappingIndex = index;
 
-      // Last index
-      if (index === pinCount - 1) {
-        const result = newDigits.join("");
-        if (result.length === pinCount) {
-          this.blurAllFields();
-          onCodeFilled(result);
+      text.split("").forEach(char => {
+        if (mappingIndex <= pinCount - 1) {
+          newDigits[mappingIndex] = char;
+          mappingIndex += 1;
         }
-      }
-    });
+      });
+      mappingIndex -= 1;
+
+      this.setState({ digits: newDigits }, () => {
+        this.notifyCodeChanged();
+        if (mappingIndex === pinCount - 1) {
+          this.blurAllFields();
+        }
+        this.focusField(mappingIndex);
+      });
+    } else {
+      newDigits[index] = text || "";
+
+      this.setState({ digits: newDigits }, () => {
+        this.notifyCodeChanged();
+
+        // Clear digit
+        if (!text && index > 0) {
+          this.focusField(index - 1);
+        }
+        // Fill in digit
+        if (index < pinCount - 1 && !!text) {
+          this.focusField(index + 1);
+        }
+
+        // Last index
+        if (index === pinCount - 1) {
+          const result = newDigits.join("");
+          if (result.length === pinCount) {
+            this.blurAllFields();
+            onCodeFilled(result);
+          }
+        }
+      });
+    }
   };
 
   handleKeyPressTextInput = (index, key) => {
@@ -193,9 +182,21 @@ export default class OTPInputView extends Component {
     }
   };
 
+  setSelection = index => {
+    const { digits } = this.state;
+    if (!this.fields[index]) return;
+
+    this.fields[index].setNativeProps({
+      selection: digits[index]
+        ? { start: 0, end: digits[index].length }
+        : { start: 0, end: 0 }
+    });
+  };
+
   focusField = index => {
     if (index < this.fields.length) {
       this.fields[index].focus();
+      this.setSelection(index);
       this.setState({
         selectedIndex: index
       });
