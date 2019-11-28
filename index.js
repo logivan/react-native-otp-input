@@ -162,6 +162,7 @@ export default class OTPInputView extends Component {
     newDigits[index] = digit || "";
 
     this.setState({ digits: newDigits }, () => {
+      this.notifyCodeChanged();
       // Clear digit
       if (!text && index > 0) {
         this.focusField(index - 1);
