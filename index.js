@@ -27,7 +27,8 @@ export default class OTPInputView extends Component {
     pinCount: 6,
     codeInputFieldStyle: null,
     codeInputHighlightStyle: null,
-    onCodeFilled: null,
+    onCodeFilled: () => null,
+    onCodeChanged: () => null,
     autoFocusOnLoad: true,
     secureTextEntry: false
   };
@@ -177,6 +178,7 @@ export default class OTPInputView extends Component {
         const result = newDigits.join("");
         if (result.length === pinCount) {
           this.blurAllFields();
+          onCodeFilled(result);
         }
       }
     });
